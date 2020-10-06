@@ -58,11 +58,11 @@
         return NO;
     }
 
-    // Ignore when the beginning location is beyond max allowed initial distance to left edge.		
-    CGPoint beginningLocation = [gestureRecognizer locationInView:gestureRecognizer.view];		
-    CGFloat maxAllowedInitialDistance = topViewController.fd_interactivePopMaxAllowedInitialDistanceToLeftEdge;		
-    if (maxAllowedInitialDistance > 0 && beginningLocation.x > maxAllowedInitialDistance) {		
-        return NO;		
+    // Ignore when the beginning location is beyond max allowed initial distance to left edge.
+    CGPoint beginningLocation = [gestureRecognizer locationInView:gestureRecognizer.view];
+    CGFloat maxAllowedInitialDistance = topViewController.fd_interactivePopMaxAllowedInitialDistanceToLeftEdge;
+    if (maxAllowedInitialDistance > 0 && beginningLocation.x > maxAllowedInitialDistance) {
+        return NO;
     }
 
     // Ignore pan gesture when the navigation controller is currently in transition.
@@ -284,6 +284,22 @@ typedef void (^_FDViewControllerWillAppearInjectBlock)(UIViewController *viewCon
 - (void)setFd_prefersNavigationBarHidden:(BOOL)hidden
 {
     objc_setAssociatedObject(self, @selector(fd_prefersNavigationBarHidden), @(hidden), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+}
+
+
+- (CGFloat)fd_interactivePopMaxAllowedInitialDistanceToLeftEdge
+{
+#if CGFLOAT_IS_DOUBLE
+    return [objc_getAssociatedObject(self, _cmd) doubleValue];
+#else
+    return [objc_getAssociatedObject(self, _cmd) floatValue];
+#endif
+}
+
+- (void)setFd_interactivePopMaxAllowedInitialDistanceToLeftEdge:(CGFloat)distance
+{
+    SEL key = @selector(fd_interactivePopMaxAllowedInitialDistanceToLeftEdge);
+    objc_setAssociatedObject(self, key, @(MAX(0, distance)), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
 }
 
 @end
