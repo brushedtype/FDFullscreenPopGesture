@@ -58,16 +58,16 @@
         return NO;
     }
 
-    // Ignore pan gesture when the navigation controller is currently in transition.
-    if ([[self.navigationController valueForKey:@"_isTransitioning"] boolValue]) {
-        return NO;
-    }
-
     // Ignore when the beginning location is beyond max allowed initial distance to left edge.		
     CGPoint beginningLocation = [gestureRecognizer locationInView:gestureRecognizer.view];		
     CGFloat maxAllowedInitialDistance = topViewController.fd_interactivePopMaxAllowedInitialDistanceToLeftEdge;		
     if (maxAllowedInitialDistance > 0 && beginningLocation.x > maxAllowedInitialDistance) {		
         return NO;		
+    }
+
+    // Ignore pan gesture when the navigation controller is currently in transition.
+    if ([[self.navigationController valueForKey:@"_isTransitioning"] boolValue]) {
+        return NO;
     }
     
     // Prevent calling the handler when the gesture begins in an opposite direction.
@@ -111,23 +111,15 @@ typedef void (^_FDViewControllerWillAppearInjectBlock)(UIViewController *viewCon
 
 + (void)load
 {
-    // Inject "-pushViewController:animated:"
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        Class class = [self class];
-
-        SEL originalSelector = @selector(pushViewController:animated:);
-        SEL swizzledSelector = @selector(fd_pushViewController:animated:);
-
-        Method originalMethod = class_getInstanceMethod(class, originalSelector);
-        Method swizzledMethod = class_getInstanceMethod(class, swizzledSelector);
-
-        BOOL success = class_addMethod(class, originalSelector, method_getImplementation(swizzledMethod), method_getTypeEncoding(swizzledMethod));
-        if (success) {
-            class_replaceMethod(class, swizzledSelector, method_getImplementation(originalMethod), method_getTypeEncoding(originalMethod));
-        } else {
-            method_exchangeImplementations(originalMethod, swizzledMethod);
-        }
+        Method viewWillAppear_originalMethod = class_getInstanceMethod(self, @selector(viewWillAppear:));
+        Method viewWillAppear_swizzledMethod = class_getInstanceMethod(self, @selector(fd_viewWillAppear:));
+        method_exchangeImplementations(viewWillAppear_originalMethod, viewWillAppear_swizzledMethod);
+    
+        Method viewWillDisappear_originalMethod = class_getInstanceMethod(self, @selector(viewWillDisappear:));
+        Method viewWillDisappear_swizzledMethod = class_getInstanceMethod(self, @selector(fd_viewWillDisappear:));
+        method_exchangeImplementations(viewWillDisappear_originalMethod, viewWillDisappear_swizzledMethod);
     });
 }
 
@@ -158,9 +150,23 @@ typedef void (^_FDViewControllerWillAppearInjectBlock)(UIViewController *viewCon
 + (void)load
 {
     // Inject "-pushViewController:animated:"
-    Method originalMethod = class_getInstanceMethod(self, @selector(pushViewController:animated:));
-    Method swizzledMethod = class_getInstanceMethod(self, @selector(fd_pushViewController:animated:));
-    method_exchangeImplementations(originalMethod, swizzledMethod);
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        Class class = [self class];
+
+        SEL originalSelector = @selector(pushViewController:animated:);
+        SEL swizzledSelector = @selector(fd_pushViewController:animated:);
+
+        Method originalMethod = class_getInstanceMethod(class, originalSelector);
+        Method swizzledMethod = class_getInstanceMethod(class, swizzledSelector);
+
+        BOOL success = class_addMethod(class, originalSelector, method_getImplementation(swizzledMethod), method_getTypeEncoding(swizzledMethod));
+        if (success) {
+            class_replaceMethod(class, swizzledSelector, method_getImplementation(originalMethod), method_getTypeEncoding(originalMethod));
+        } else {
+            method_exchangeImplementations(originalMethod, swizzledMethod);
+        }
+    });
 }
 
 - (void)fd_pushViewController:(UIViewController *)viewController animated:(BOOL)animated
