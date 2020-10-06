@@ -62,6 +62,13 @@
     if ([[self.navigationController valueForKey:@"_isTransitioning"] boolValue]) {
         return NO;
     }
+
+    // Ignore when the beginning location is beyond max allowed initial distance to left edge.		
+    CGPoint beginningLocation = [gestureRecognizer locationInView:gestureRecognizer.view];		
+    CGFloat maxAllowedInitialDistance = topViewController.fd_interactivePopMaxAllowedInitialDistanceToLeftEdge;		
+    if (maxAllowedInitialDistance > 0 && beginningLocation.x > maxAllowedInitialDistance) {		
+        return NO;		
+    }
     
     // Prevent calling the handler when the gesture begins in an opposite direction.
     CGPoint translation = [gestureRecognizer translationInView:gestureRecognizer.view];
